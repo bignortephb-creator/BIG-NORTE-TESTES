@@ -280,11 +280,13 @@ document.getElementById('formLogin').addEventListener('submit',async e=>{
       const {error}=await supa.auth.signInWithPassword({email:identificador,password:senha});
       if(error)throw error;
     }else{
-      // Depende da função segura login-usuario ainda não publicada no Supabase.
-      const {data,error}=await supa.functions.invoke('login-usuario',{body:{nome_usuario:identificador,senha}});
-      if(error||!data?.access_token||!data?.refresh_token)throw new Error('Login de funcionário indisponível');
-      const {error:erroSessao}=await supa.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token});
-      if(erroSessao)throw erroSessao;
+      // O cadastro de funcionários usa e-mail técnico no Supabase Auth.
+      // Não é necessária uma Edge Function separada para autenticar.
+      const nomeUsuario=identificador.toLowerCase();
+      if(!/^[a-z0-9._-]{3,40}$/.test(nomeUsuario))throw new Error('Nome de usuário inválido');
+      const emailTecnico=nomeUsuario+'@login.big-norte.invalid';
+      const {error}=await supa.auth.signInWithPassword({email:emailTecnico,password:senha});
+      if(error)throw error;
     }
     await verificarSessao();
     document.getElementById('senhaLogin').value='';
